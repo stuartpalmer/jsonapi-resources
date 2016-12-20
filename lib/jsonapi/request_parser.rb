@@ -217,8 +217,14 @@ module JSONAPI
         fail JSONAPI::Exceptions::ParametersNotAllowed.new([:include])
       end
 
-      included_resources = CSV.parse_line(include)
-      return if included_resources.nil?
+      included_resources = []
+      begin
+        included_resources += CSV.parse_line(include)
+      rescue CSV::MalformedCSVError
+        included_resources << include
+      end
+
+      return if included_resources.empty?
 
       include = []
       included_resources.each do |included_resource|
@@ -265,7 +271,15 @@ module JSONAPI
         fail JSONAPI::Exceptions::ParametersNotAllowed.new([:sort])
       end
 
-      @sort_criteria = CSV.parse_line(URI.unescape(sort_criteria)).collect do |sort|
+      sorts = []
+      begin
+        raw = URI.unescape(sort_criteria)
+        sorts += CSV.parse_line(raw)
+      rescue CSV::MalformedCSVError
+        sorts << raw
+      end
+
+      @sort_criteria = sorts.collect do |sort|
         if sort.start_with?('-')
           sort_criteria = { field: unformat_key(sort[1..-1]).to_s }
           sort_criteria[:direction] = :desc

@@ -1072,6 +1072,26 @@ class RequestTest < ActionDispatch::IntegrationTest
     JSONAPI.configuration.allow_sort = true
   end
 
+  def test_sort_parameter_quoted
+    get '/api/v2/books?sort="title"', headers: { 'Accept' => JSONAPI::MEDIA_TYPE }
+    assert_jsonapi_response 200
+  end
+
+  def test_sort_parameter_openquoted
+    get '/api/v2/books?sort="title', headers: { 'Accept' => JSONAPI::MEDIA_TYPE }
+    assert_jsonapi_response 400
+  end
+
+  def test_include_parameter_quoted
+    get '/api/v2/posts?include="author"', headers: { 'Accept' => JSONAPI::MEDIA_TYPE }
+    assert_jsonapi_response 200
+  end
+
+  def test_include_parameter_openquoted
+    get '/api/v2/posts?include="author', headers: { 'Accept' => JSONAPI::MEDIA_TYPE }
+    assert_jsonapi_response 400
+  end
+
   def test_getting_different_resources_when_sti
     assert_cacheable_jsonapi_get '/vehicles'
     types = json_response['data'].map{|r| r['type']}.sort
